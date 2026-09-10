@@ -1,3 +1,4 @@
+import type {ComponentType} from 'react'
 import {SlugDefinition, SlugInputProps, SlugOptions, type FieldDefinition} from 'sanity'
 
 interface ExtendedSlugOptions extends SlugOptions {
@@ -88,7 +89,10 @@ export type SanityLink = {
 }
 
 export interface FormBuilderPluginOptions {
+  /** Registers the `formModule` object type (a reference to a `form` document) for page builders */
   enableModule?: boolean
   additionalFieldTypes?: {title: string; value: string}[]
   additionalSelectPresets?: {title: string; value: string}[]
+  /** Icon for the `form` document and `formModule`: an emoji or an icon component. Defaults to 📝 */
+  formIcon?: string | ComponentType
 }

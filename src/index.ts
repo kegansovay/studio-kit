@@ -12,11 +12,12 @@ import formSelect from './schemas/objects/formSelect'
 import formTextarea from './schemas/objects/formTextarea'
 import formModule from './schemas/objects/module/formModule'
 import {FormBuilderPluginOptions} from './types'
+import {emojiIcon} from './utils'
 
 /* ------------- Character Input, Link Field and helper objects ------------- */
 /** @public */ export {CharacterCountInput} from './components/CharacterCountInput'
 /** @public */ export {linkField} from './schemas/objects/linkField'
-/** @public */ export {defineSlug} from './utils'
+/** @public */ export {defineSlug, emojiIcon} from './utils'
 /** @public */ export type {SlugParams, SlugFieldOverrides} from './types'
 
 /* ------------------------ Form Builder Plugin below ----------------------- */
@@ -27,6 +28,7 @@ export const FormBuilderPlugin = definePlugin<FormBuilderPluginOptions | void>((
     enableModule = false,
     additionalFieldTypes = [],
     additionalSelectPresets = [],
+    formIcon = '📝',
   } = props || {}
 
   const defaultFieldTypes = [
@@ -44,13 +46,14 @@ export const FormBuilderPlugin = definePlugin<FormBuilderPluginOptions | void>((
 
   const fieldTypes = [...defaultFieldTypes, ...additionalFieldTypes]
   const selectPresets = [...defaultSelectPresets, ...additionalSelectPresets]
-  const enabledTypes = enableModule ? [formModule] : []
+  const icon = typeof formIcon === 'string' ? emojiIcon(formIcon) : formIcon
+  const enabledTypes = enableModule ? [formModule(icon)] : []
 
   return {
     name: 'form-builder',
     schema: {
       types: [
-        formDocument,
+        formDocument(icon),
         formField(fieldTypes),
         formTextarea,
         formSelect(selectPresets),
