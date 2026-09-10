@@ -1,8 +1,8 @@
-import { defineField, defineType } from 'sanity'
+import {RiCheckboxLine} from 'react-icons/ri'
+import {defineField, defineType} from 'sanity'
 
-import { RiCheckboxLine } from 'react-icons/ri'
-import { FormFieldEnum } from '../../enums'
-import { formCommon } from '../common'
+import {FormFieldEnum} from '../../enums'
+import {formCommon} from '../common'
 
 export default defineType({
   name: FormFieldEnum.enum.formCheckbox,
@@ -31,10 +31,8 @@ export default defineType({
       title: 'fieldLabel',
       options: 'options',
     },
-    prepare({title}) {
-      return {
-        title: title as string,
-      }
+    prepare({title}: {title?: string}) {
+      return {title}
     },
   },
 })

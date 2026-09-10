@@ -31,10 +31,8 @@ export default defineType({
       title: 'fieldLabel',
       options: 'options',
     },
-    prepare({title}) {
-      return {
-        title: title as string,
-      }
+    prepare({title}: {title?: string}) {
+      return {title}
     },
   },
 })

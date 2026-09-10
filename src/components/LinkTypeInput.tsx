@@ -1,17 +1,18 @@
-import {ChevronDownIcon} from '@sanity/icons'
-import {Button, Menu, MenuButton, MenuItem} from '@sanity/ui'
+import {ChevronDownIcon} from '@sanity/icons/ChevronDown'
+import {Button} from '@sanity/ui'
+import {Menu, MenuButton, MenuItem} from '@sanity/ui/menu'
 import {AtSignIcon, GlobeIcon, LinkIcon, PhoneIcon} from 'lucide-react'
 import React, {ComponentType} from 'react'
 import {set, type StringInputProps} from 'sanity'
-import styled from 'styled-components'
+import {styled} from 'styled-components'
+
+import {LinkFieldPluginOptions} from '../types'
 
 export interface LinkType {
   title: string
   value: string
   icon: ComponentType
 }
-
-import {LinkFieldPluginOptions} from '../types'
 
 const defaultLinkTypes: LinkType[] = [
   {title: 'Internal', value: 'internal', icon: LinkIcon},
@@ -20,9 +21,12 @@ const defaultLinkTypes: LinkType[] = [
   {title: 'Phone', value: 'phone', icon: PhoneIcon},
 ]
 
+// `&&` raises specificity above @sanity/ui's static button and menu styles
 const LinkTypeButton = styled(Button)`
-  height: 100%;
-  padding: 0.2rem;
+  && {
+    height: 100%;
+    padding: 0.2rem;
+  }
   svg.lucide {
     width: 1rem;
     height: 1rem;
@@ -30,7 +34,7 @@ const LinkTypeButton = styled(Button)`
 `
 
 const LinkTypeMenuItem = styled(MenuItem)`
-  svg.lucide {
+  && svg.lucide {
     width: 1rem;
     height: 1rem;
   }
@@ -47,12 +51,10 @@ export function LinkTypeInput({
 }: StringInputProps & {
   linkableSchemaTypes: LinkFieldPluginOptions['linkableSchemaTypes']
 }): React.ReactElement {
-  const linkTypes = [
-    // Disable internal links if not enabled for any schema types
-    ...defaultLinkTypes.filter(
-      ({value}) => value !== 'internal' || linkableSchemaTypes?.length > 0,
-    ),
-  ]
+  // Disable internal links if not enabled for any schema types
+  const linkTypes = defaultLinkTypes.filter(
+    (type) => type.value !== 'internal' || linkableSchemaTypes?.length > 0,
+  )
 
   const selectedType = linkTypes.find((type) => type.value === value) || linkTypes[0]
 

@@ -1,4 +1,5 @@
 import {Box, Flex, Stack, Text} from '@sanity/ui'
+import React, {useEffect} from 'react'
 import {
   type FieldMember,
   FormFieldValidationStatus,
@@ -10,7 +11,6 @@ import {
 import styled from 'styled-components'
 
 import {LinkValue} from '../types'
-import React, {useEffect} from 'react'
 
 const ValidationErrorWrapper = styled(Box)`
   contain: size;
@@ -32,18 +32,18 @@ const FullWidthStack = styled(Stack)`
  */
 export function LinkInput(props: ObjectInputProps<LinkValue>): React.ReactElement {
   const [textField, typeField, linkField, ...otherFields] = props.members as FieldMember[]
+  const {value, onChange} = props
 
   const disableText = props.schemaType.options?.disableText
 
   // Set a default value for text if disableText is true
   useEffect(() => {
-    console.log('changing?')
-    if (disableText && (!props.value?.text || props.value.text === '')) {
+    if (disableText && (!value?.text || value.text === '')) {
       // Create a patch to set a placeholder value
       const patch = PatchEvent.from(set('_disabled_', ['text']))
-      props.onChange(patch)
+      onChange(patch)
     }
-  }, [disableText, props.value, props.onChange])
+  }, [disableText, value?.text, onChange])
 
   const {
     field: {
@@ -64,10 +64,8 @@ export function LinkInput(props: ObjectInputProps<LinkValue>): React.ReactElemen
     renderPreview: props.renderPreview,
   }
 
-  console.log(textField.field.validation)
-
   return (
-    <Stack space={4}>
+    <Stack gap={4}>
       {/* Only render text field if not disabled */}
 
       {!disableText && (
@@ -86,7 +84,7 @@ export function LinkInput(props: ObjectInputProps<LinkValue>): React.ReactElemen
         />
       )}
 
-      <Stack space={3}>
+      <Stack gap={3}>
         <Text as="label" weight="medium" size={1}>
           Link
         </Text>
@@ -118,7 +116,7 @@ export function LinkInput(props: ObjectInputProps<LinkValue>): React.ReactElemen
             {...renderProps}
           />
 
-          <FullWidthStack space={2}>
+          <FullWidthStack gap={2}>
             {/* Render the input for the selected type of link (withouts its label) */}
             <ObjectInputMember
               member={{

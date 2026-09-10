@@ -2,7 +2,8 @@ import * as PathUtils from '@sanity/util/paths'
 import React, {useCallback, useEffect, useState} from 'react'
 import {PatchEvent, SanityDocument, set, SlugInputProps, unset, useFormValue} from 'sanity'
 import speakingurl from 'speakingurl'
-import { useSlugContext } from './useSlugContext'
+
+import {useSlugContext} from './useSlugContext'
 
 const createPatchFrom = (value: any) => PatchEvent.from(value ? set(value) : unset())
 
@@ -21,9 +22,7 @@ export function usePrefixLogic(props: SlugInputProps) {
       ? '/'
       : `${folder.startsWith('/') ? '' : '/'}${folder}${
           // Add a slash if the prefix doesn't end with one and doesn't contain a hash or a query string
-          !folder?.endsWith('/') && !folder?.includes('#') && !folder?.includes('?')
-            ? '/'
-            : ''
+          !folder?.endsWith('/') && !folder?.includes('#') && !folder?.includes('?') ? '/' : ''
         }`
 
   const getUrlPrefix = useCallback(

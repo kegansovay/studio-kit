@@ -1,4 +1,5 @@
-import {Box, Button, Card, Code, Flex, Stack, Text, TextInput} from '@sanity/ui'
+import {Box, Button, Card, Flex, Stack, Text, TextInput} from '@sanity/ui'
+import {Code} from '@sanity/ui/code'
 import React, {useCallback} from 'react'
 import styled from 'styled-components'
 
@@ -54,7 +55,7 @@ export default function SlugInput(props: ExtendedSlugInputProps) {
   )
 
   return (
-    <Stack space={3}>
+    <Stack gap={3}>
       <Text size={1}>
         {/* Slice off initial slash  */}
         {baseUrl + (prefix == undefined ? '' : prefix.slice(1))}

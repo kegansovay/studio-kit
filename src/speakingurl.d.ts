@@ -1,4 +1,4 @@
 declare module 'speakingurl' {
-  const slug: (input: string, options?: { symbols?: boolean }) => string
+  const slug: (input: string, options?: {symbols?: boolean}) => string
   export default slug
 }

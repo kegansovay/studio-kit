@@ -1,18 +1,18 @@
-import { IconType } from 'react-icons'
+import {IconType} from 'react-icons'
 import {
-    RiAtLine,
-    RiCalendarLine,
-    RiEyeOffLine,
-    RiNumber7,
-    RiPhoneLine,
-    RiText,
-    RiTimeLine,
+  RiAtLine,
+  RiCalendarLine,
+  RiEyeOffLine,
+  RiNumber7,
+  RiPhoneLine,
+  RiText,
+  RiTimeLine,
 } from 'react-icons/ri'
-import { TbWorldWww } from 'react-icons/tb'
-import { defineField, defineType } from 'sanity'
+import {TbWorldWww} from 'react-icons/tb'
+import {defineField, defineType} from 'sanity'
 
-import { FormFieldEnum } from '../../enums'
-import { formCommon } from '../common'
+import {FormFieldEnum} from '../../enums'
+import {formCommon} from '../common'
 
 /** Alter the subtitle text label by the input type */
 const labelSubtitleController = (type: string): string => {
@@ -105,7 +105,6 @@ export default (fieldTypeOptions: Array<{title: string; value: string}>) =>
         type: 'string',
         description: 'Placeholder text (optional)',
       }),
-      
     ],
     preview: {
       select: {

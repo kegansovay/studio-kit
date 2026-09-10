@@ -1,9 +1,9 @@
+import {LinkIcon} from '@sanity/icons/Link'
 import {defineField, definePlugin, defineType, type ObjectInputProps} from 'sanity'
 
-import type {LinkFieldPluginOptions, LinkValue} from '../../types'
-import {LinkTypeInput} from '../../components/LinkTypeInput'
 import {LinkInput} from '../../components/LinkInput'
-import {LinkIcon} from '@sanity/icons'
+import {LinkTypeInput} from '../../components/LinkTypeInput'
+import type {LinkFieldPluginOptions, LinkValue} from '../../types'
 
 /** @public */
 export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => {
@@ -239,19 +239,19 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
         switch (type) {
           case 'internal':
             subtitle = internalLink?.name || 'Internal Link'
-            break;
+            break
           case 'external':
             subtitle = url || 'External Link'
-            break;
+            break
           case 'email':
             subtitle = email || 'Email Link'
-            break;
+            break
           case 'phone':
             subtitle = phone || 'Phone'
-            break;
+            break
           default:
             subtitle = type.charAt(0).toUpperCase() + type.slice(1)
-            break;
+            break
         }
         return {
           title,

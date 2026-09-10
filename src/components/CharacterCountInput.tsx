@@ -1,5 +1,5 @@
-import React from 'react'
 import {Stack} from '@sanity/ui'
+import React from 'react'
 import type {StringInputProps} from 'sanity'
 
 /**
@@ -11,7 +11,7 @@ import type {StringInputProps} from 'sanity'
 export function CharacterCountInput(maxCount: number = 160) {
   function CharacterCountInputComponent(props: StringInputProps): React.ReactElement {
     return (
-      <Stack space={3}>
+      <Stack gap={3}>
         <div>
           <div
             style={{
@@ -21,7 +21,10 @@ export function CharacterCountInput(maxCount: number = 160) {
               paddingRight: '0.25rem',
               borderRadius: '.2rem',
               fontSize: '0.75rem',
-              border: `${props.value?.length && props.value.length > maxCount ? '1px solid #f76d5f' : '1px solid'}`,
+              border:
+                props.value?.length && props.value.length > maxCount
+                  ? '1px solid #f76d5f'
+                  : '1px solid',
             }}
           >
             {props.value?.length ? props.value.length : '0'}/{maxCount}

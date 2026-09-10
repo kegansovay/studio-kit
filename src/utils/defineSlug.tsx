@@ -1,6 +1,7 @@
 import {defineField, FieldDefinition} from 'sanity'
-import {SlugParams} from '../types'
+
 import SlugInput from '../components/SlugInput'
+import {SlugParams} from '../types'
 
 /** @public */
 export function defineSlug(schema: SlugParams = {name: 'slug'}): FieldDefinition<'slug'> {

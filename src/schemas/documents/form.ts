@@ -1,12 +1,8 @@
-import {defineArrayMember, defineField, defineType} from 'sanity'
-import {z} from 'zod'
-
-//import {getFormFields} from '../common'
 import {PencilIcon} from 'lucide-react'
+import {defineField, defineType} from 'sanity'
+
 import {FormDocumentTypeEnum} from '../../enums'
 import {getFormFields} from '../common'
-
-const emailFieldSchema = z.array(z.string().email())
 
 export default defineType({
   name: FormDocumentTypeEnum.enum.form,

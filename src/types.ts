@@ -1,12 +1,4 @@
-import {
-  ObjectSchemaType,
-  SlugDefinition,
-  SlugInputProps,
-  SlugOptions,
-  type FieldDefinition,
-  type ObjectInputProps,
-  type StringInputProps,
-} from 'sanity'
+import {SlugDefinition, SlugInputProps, SlugOptions, type FieldDefinition} from 'sanity'
 
 interface ExtendedSlugOptions extends SlugOptions {
   url: string
@@ -60,8 +52,7 @@ export interface InternalLink extends CustomizableLink {
   type: 'internal'
   internalLink?: {
     _type: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
@@ -101,4 +92,3 @@ export interface FormBuilderPluginOptions {
   additionalFieldTypes?: {title: string; value: string}[]
   additionalSelectPresets?: {title: string; value: string}[]
 }
-

@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField} from 'sanity'
+
 import {FormFieldEnum} from '../enums'
 
 export const formCommon = [

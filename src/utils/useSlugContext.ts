@@ -2,13 +2,13 @@
 // Adapted from:
 // https://github.com/sanity-io/sanity/blob/next/packages/sanity/src/core/form/inputs/Slug/utils/useSlugContext.ts
 
-import { useMemo } from 'react'
+import {useMemo} from 'react'
 import {
   useCurrentUser,
   useDataset,
   useProjectId,
   useSchema,
-  useSource,
+  useWorkspace,
   SlugSourceContext,
 } from 'sanity'
 
@@ -21,7 +21,7 @@ export type SlugContext = Omit<SlugSourceContext, 'parent' | 'parentPath'>
  * @internal
  */
 export function useSlugContext(): SlugContext {
-  const { getClient } = useSource()
+  const {getClient} = useWorkspace()
   const schema = useSchema()
   const currentUser = useCurrentUser()
   const projectId = useProjectId()

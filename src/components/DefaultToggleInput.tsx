@@ -1,5 +1,6 @@
-import {Box, Flex, Switch, Text, Tooltip} from '@sanity/ui'
-import React, {useCallback} from 'react'
+import {Box, Flex, Switch, Text} from '@sanity/ui'
+import {Tooltip} from '@sanity/ui/tooltip'
+import React, {useCallback, useMemo} from 'react'
 import {type ObjectItemProps, PatchEvent, set, useFormValue} from 'sanity'
 import {useDocumentPane} from 'sanity/structure'
 
@@ -7,6 +8,12 @@ export interface SelectOption {
   _key: string
   optionDefault?: boolean
   optionValue?: string
+}
+
+function isSelectOption(value: unknown): value is SelectOption {
+  return (
+    typeof value === 'object' && value !== null && '_key' in value && typeof value._key === 'string'
+  )
 }
 
 export function DefaultToggleItem(props: ObjectItemProps<SelectOption>): React.ReactElement {
@@ -18,17 +25,19 @@ export function DefaultToggleItem(props: ObjectItemProps<SelectOption>): React.R
   const {onChange} = useDocumentPane()
 
   // Get the parent array to check if any other items are set as default
-  const parentPath = path.slice(0, -1)
-  const allItems = useFormValue(parentPath) as SelectOption[]
+  const parentPath = useMemo(() => path.slice(0, -1), [path])
+  const parentValue = useFormValue(parentPath)
+  const allItems = useMemo(
+    () => (Array.isArray(parentValue) ? parentValue.filter(isSelectOption) : []),
+    [parentValue],
+  )
 
   const handleClick = useCallback(() => {
     const nextValue = !value?.optionDefault
     const clickedFeaturedPath = [...path, 'optionDefault']
-    const otherFeaturedPaths = allItems.length
-      ? allItems
-          ?.filter((p) => p._key !== value?._key && p.optionDefault)
-          .map((p) => [...parentPath, {_key: p._key}, 'optionDefault'])
-      : []
+    const otherFeaturedPaths = allItems
+      .filter((item) => item._key !== value?._key && item.optionDefault)
+      .map((item) => parentPath.concat([{_key: item._key}, 'optionDefault']))
 
     // Because onChange came from useDocumentPane
     // we need to wrap it in a PatchEvent
@@ -50,7 +59,7 @@ export function DefaultToggleItem(props: ObjectItemProps<SelectOption>): React.R
         content={
           <Box padding={2}>
             <Text muted size={1}>
-              {`Set as default option`}
+              Set as default option
             </Text>
           </Box>
         }

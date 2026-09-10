@@ -1,16 +1,15 @@
 import {definePlugin} from 'sanity'
-import {z} from 'zod'
 
-import {FormDocumentTypeEnum, FormFieldEnum} from './enums'
+import {FormDocumentType, FormDocumentTypeEnum, FormFieldEnum, FormFieldType} from './enums'
 import formDocument from './schemas/documents/form'
-import formField from './schemas/objects/formField'
-import formTextarea from './schemas/objects/formTextarea'
-import formSelect from './schemas/objects/formSelect'
 import formCheckbox from './schemas/objects/formCheckbox'
+import formCheckboxGroup from './schemas/objects/formCheckboxGroup'
+import formField from './schemas/objects/formField'
+import formGroup from './schemas/objects/formGroup'
 import formRadioButton from './schemas/objects/formRadioButton'
 import formRadioButtonGroup from './schemas/objects/formRadioButtonGroup'
-import formCheckboxGroup from './schemas/objects/formCheckboxGroup'
-import formGroup from './schemas/objects/formGroup'
+import formSelect from './schemas/objects/formSelect'
+import formTextarea from './schemas/objects/formTextarea'
 import formModule from './schemas/objects/module/formModule'
 import {FormBuilderPluginOptions} from './types'
 
@@ -74,6 +73,6 @@ export const FormBuilderEnums = {
 
 /** @public */
 export type FormBuilderEnumsType = {
-  documents: z.infer<typeof FormDocumentTypeEnum>
-  fields: z.infer<typeof FormFieldEnum>
+  documents: FormDocumentType
+  fields: FormFieldType
 }

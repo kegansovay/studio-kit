@@ -77,29 +77,31 @@ export default (selectPresetOptions: Array<{title: string; value: string}>) =>
             },
           }),
         ],
-        hidden: ({parent}) => {
-          return parent.selectPreset ? true : false
-        },
+        hidden: ({parent}) => Boolean(parent?.selectPreset),
         validation: (rule) =>
-          rule.custom((items, {parent}: any) => {
-            if (!items && !parent.selectPreset) {
+          rule.custom<SelectOption[]>((items, {parent}) => {
+            const hasPreset =
+              typeof parent === 'object' &&
+              parent !== null &&
+              'selectPreset' in parent &&
+              Boolean(parent.selectPreset)
+
+            if (!items && !hasPreset) {
               return 'Options or a preset must be set'
             }
             // Confirm only one items is set as default
-            const featuredItems = (items ?? []).filter((item) => (item as SelectOption).optionDefault)
+            const featuredItems = (items ?? []).filter((item) => item.optionDefault)
 
             if (featuredItems.length > 1) {
-              return {
-                paths: featuredItems.filter(isKeyedObject).map((item) => [{_key: item._key}]),
+              return featuredItems.filter(isKeyedObject).map((item) => ({
                 message: 'Only one option can be set as default',
-              }
+                path: [{_key: item._key}],
+              }))
             }
 
             // Verify that options values are unique
-            const fieldNames = new Set(
-              (items ?? []).map((item) => (item as SelectOption).optionValue) ?? [],
-            )
-            if ([...fieldNames].length < (items ?? []).length) {
+            const optionValues = new Set((items ?? []).map((item) => item.optionValue))
+            if (optionValues.size < (items ?? []).length) {
               return {
                 message: 'Multiple items have the same value',
               }
@@ -114,14 +116,20 @@ export default (selectPresetOptions: Array<{title: string; value: string}>) =>
         options: 'options',
         selectPreset: 'selectPreset',
       },
-      prepare({title, options, selectPreset}) {
-        const selectOptions = options as {
-          optionValue: string
-          optionLabel: string
-        }[]
+      prepare({
+        title,
+        options,
+        selectPreset,
+      }: {
+        title?: string
+        options?: {optionLabel?: string}[]
+        selectPreset?: string
+      }) {
         return {
           title: `Select - ${title}`,
-          subtitle: options ? selectOptions.map((o) => o.optionLabel).join(', ') : selectPreset || '',
+          subtitle: options
+            ? options.map((option) => option.optionLabel).join(', ')
+            : selectPreset || '',
         }
       },
     },

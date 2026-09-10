@@ -39,7 +39,7 @@ export default defineType({
     },
     prepare({title}: {title: string; subtitle?: string}) {
       return {
-        title: title as string,
+        title,
         subtitle: 'A group of fields',
       }
     },

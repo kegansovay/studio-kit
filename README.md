@@ -31,34 +31,37 @@ defineField({
 
 ### Link
 
-**All credit to [Sanity Plugin Link Field](https://github.com/winteragency/sanity-plugin-link-field)** – This is just a modified/simplified version of their plugin. See their documentation for more. 
+**All credit to [Sanity Plugin Link Field](https://github.com/winteragency/sanity-plugin-link-field)** – This is just a modified/simplified version of their plugin. See their documentation for more.
+
 ###### Modifications:
+
 - No custom Links
 - Adjusted input styling
 - Text by default
 - Validation requirements for all fields
 
 Setup plugin in `sanity.config.ts`:
+
 ```ts
-import { linkField } from '@madebythread/thread-kit'
+import {linkField} from '@madebythread/thread-kit'
 
 export default defineConfig({
   //...
-  plugins:[
+  plugins: [
     //...
     linkField({
       linkableSchemaTypes: pageTypes,
       enableAnchorLinks: false, //optional default is true
-      enableLinkParameters: false //optional default is true
-    })
-
-  ]
+      enableLinkParameters: false, //optional default is true
+    }),
+  ],
 })
 ```
 
 ### defineSlug
-This is a slug input field that allows for folder a prefix. 
-This component is dapted from hdoro's [slug plugin](https://github.com/hdoro/sanity-plugin-prefixed-slug) 
+
+This is a slug input field that allows for folder a prefix.
+This component is dapted from hdoro's [slug plugin](https://github.com/hdoro/sanity-plugin-prefixed-slug)
 
 For frontend: can query for `slug.fullUrl` and get the prefix. But you still have access to `slug.current`
 
