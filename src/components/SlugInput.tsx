@@ -1,10 +1,11 @@
 import {Box, Button, Card, Flex, Stack, Text, TextInput} from '@sanity/ui'
 import {Code} from '@sanity/ui/code'
-import React, {useCallback} from 'react'
-import styled from 'styled-components'
+import {type ChangeEvent, type FocusEvent, type ReactElement, useCallback} from 'react'
+import {styled} from 'styled-components'
 
-import {ExtendedSlugInputProps} from '../types'
+import type {ExtendedSlugInputProps} from '../types'
 import {usePrefixLogic} from '../utils/usePrefixLogic'
+
 const UrlPrefix = styled(Card)`
   flex: 0 1 min-content;
 
@@ -32,58 +33,65 @@ const UrlPrefix = styled(Card)`
 /**
  * Custom slug component for better UX & safer slugs:
  * - shows the final URL for the relative address (adds the BASE.PATH/ at the start)
- * - removes special characters and startin/trailing slashes
+ * - removes special characters and starting/trailing slashes
+ * - keeps `fullUrl` in sync with the folder and `current`
  */
-export default function SlugInput(props: ExtendedSlugInputProps) {
-  const {value, schemaType, url} = props
-  const baseUrl = url.endsWith('/') ? url : url + '/'
+export default function SlugInput(props: ExtendedSlugInputProps): ReactElement {
+  const {elementProps, readOnly, schemaType, url, value} = props
+  const {onBlur: onElementBlur} = elementProps
+  const baseUrl = url.endsWith('/') ? url : `${url}/`
 
   const {prefix, generateSlug, updateValue, formatSlug} = usePrefixLogic(props)
 
-  const onChange = useCallback(
-    (event: React.FormEvent<HTMLInputElement>) => updateValue(event.currentTarget.value),
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => updateValue(event.currentTarget.value),
     [updateValue],
   )
 
-  const onBlur = useCallback(
-    (event: React.FocusEvent<HTMLInputElement, Element>) => {
-      formatSlug(event.currentTarget.value)
-      props.elementProps.onBlur(event)
+  const handleBlur = useCallback(
+    (event: FocusEvent<HTMLInputElement>) => {
+      formatSlug(event.currentTarget.value).catch((error: unknown) => {
+        console.error(`[thread-kit] Couldn't format the slug:`, error)
+      })
+      onElementBlur(event)
     },
-    // eslint-disable-next-line
-    [formatSlug, props.elementProps.onBlur],
+    [formatSlug, onElementBlur],
   )
+
+  const handleGenerate = useCallback(() => {
+    generateSlug().catch((error: unknown) => {
+      console.error(`[thread-kit] Couldn't generate the slug:`, error)
+    })
+  }, [generateSlug])
 
   return (
     <Stack gap={3}>
       <Text size={1}>
-        {/* Slice off initial slash  */}
-        {baseUrl + (prefix == undefined ? '' : prefix.slice(1))}
-        {props.value?.current || ''}
+        {/* Slice off the prefix's initial slash, baseUrl already ends with one */}
+        {`${baseUrl}${prefix.slice(1)}${value?.current ?? ''}`}
       </Text>
       <Flex style={{gap: '0.5em'}} align="center">
-        {prefix && prefix != '/' && (
+        {prefix !== '/' && (
           <UrlPrefix data-no-generate={!schemaType.options?.source}>
-            {/* Slice off initial slash  */}
             <Code size={2}>{prefix.slice(1)}</Code>
           </UrlPrefix>
         )}
         <Box flex={3}>
           <TextInput
-            value={value?.current || ''}
-            readOnly={props.readOnly}
-            {...props.elementProps}
-            onChange={onChange}
-            onBlur={onBlur}
+            value={value?.current ?? ''}
+            readOnly={readOnly}
+            {...elementProps}
+            onChange={handleChange}
+            onBlur={handleBlur}
           />
         </Box>
         {schemaType.options?.source && (
           <Button
             mode="ghost"
             type="button"
-            disabled={props.readOnly}
-            onClick={generateSlug}
-            text={'Generate'}
+            disabled={readOnly}
+            onClick={handleGenerate}
+            text="Generate"
           />
         )}
       </Flex>

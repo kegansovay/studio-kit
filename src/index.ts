@@ -17,7 +17,8 @@ import {emojiIcon} from './utils'
 /* ------------- Character Input, Link Field and helper objects ------------- */
 /** @public */ export {CharacterCountInput} from './components/CharacterCountInput'
 /** @public */ export {linkField} from './schemas/objects/linkField'
-/** @public */ export {defineSlug, emojiIcon} from './utils'
+/** @public */ export {buildFullUrl, defineSlug, emojiIcon} from './utils'
+/** @public */ export type {SlugFolder} from './utils'
 /** @public */ export type {SlugParams, SlugFieldOverrides} from './types'
 
 /* ------------------------ Form Builder Plugin below ----------------------- */

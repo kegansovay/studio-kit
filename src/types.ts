@@ -1,10 +1,21 @@
 import type {ComponentType} from 'react'
-import {SlugDefinition, SlugInputProps, SlugOptions, type FieldDefinition} from 'sanity'
+import type {
+  ConditionalProperty,
+  FieldDefinition,
+  SlugDefinition,
+  SlugInputProps,
+  SlugOptions,
+} from 'sanity'
+
+import type {SlugFolder} from './utils/fullUrl'
 
 interface ExtendedSlugOptions extends SlugOptions {
-  url: string
-  folder?: string
-  locked?: boolean | (({document}: any) => boolean)
+  /** Site origin shown in front of the path in the input, e.g. `https://example.com` */
+  url?: string
+  /** Folder in front of `slug.current`, e.g. `'podcast/media'`, or a function of the document that returns one */
+  folder?: SlugFolder
+  /** Makes the field read-only */
+  locked?: ConditionalProperty
 }
 
 /** Props that can be set on a field when used inside an object (e.g. group, fieldset). Sanity's SlugDefinition doesn't include these in its type, but defineField accepts them. */
@@ -29,7 +40,7 @@ export type SlugParams = Omit<SlugDefinition, 'type' | 'options' | 'name'> &
 
 export interface ExtendedSlugInputProps extends SlugInputProps {
   url: string
-  folder?: string
+  folder?: SlugFolder
 }
 
 export interface LinkFieldPluginOptions {

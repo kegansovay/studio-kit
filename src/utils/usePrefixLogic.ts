@@ -1,117 +1,148 @@
 import * as PathUtils from '@sanity/util/paths'
-import React, {useCallback, useEffect, useState} from 'react'
-import {PatchEvent, SanityDocument, set, SlugInputProps, unset, useFormValue} from 'sanity'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import {
+  isSanityDocument,
+  type SanityDocument,
+  set,
+  setIfMissing,
+  type SlugParent,
+  type SlugSourceContext,
+  unset,
+  useFormValue,
+} from 'sanity'
 import speakingurl from 'speakingurl'
 
+import type {ExtendedSlugInputProps} from '../types'
+import {buildFullUrl, buildPrefix, resolveFolder, type SlugFolder} from './fullUrl'
 import {useSlugContext} from './useSlugContext'
 
-const createPatchFrom = (value: any) => PatchEvent.from(value ? set(value) : unset())
+interface FolderState {
+  /** False until a folder function has resolved for the first time */
+  ready: boolean
+  folder: string | undefined
+}
 
-// eslint-disable-next-line
-export function usePrefixLogic(props: SlugInputProps) {
-  const {schemaType} = props
-  const sourceContext = useSlugContext()
-  const document = useFormValue([]) as SanityDocument | undefined
-  const options = schemaType.options as SlugInputProps['schemaType']['options'] & {
-    folder?: string | Function | Promise<unknown> | undefined
-  }
+/**
+ * Resolves the folder option. A static folder is ready straight away. A folder function re-runs
+ * whenever the document changes, and the last result is kept while it resolves.
+ */
+function useFolder(
+  folder: SlugFolder | undefined,
+  document: SanityDocument | undefined,
+): FolderState {
+  const [resolved, setResolved] = useState<FolderState>({ready: false, folder: undefined})
 
-  const [folder, setFolder] = useState<string | undefined>()
-  const finalPrefix =
-    folder === undefined
-      ? '/'
-      : `${folder.startsWith('/') ? '' : '/'}${folder}${
-          // Add a slash if the prefix doesn't end with one and doesn't contain a hash or a query string
-          !folder?.endsWith('/') && !folder?.includes('#') && !folder?.includes('?') ? '/' : ''
-        }`
-
-  const getUrlPrefix = useCallback(
-    async (doc: SanityDocument | undefined) => {
-      if (!doc) return
-
-      if (typeof options?.folder === 'string') {
-        setFolder(options.folder)
-        return
-      }
-
-      if (typeof options?.folder === 'function') {
-        try {
-          const value = await Promise.resolve(options.folder(doc))
-          setFolder(value)
-          return
-        } catch (error) {
-          console.error(`[prefixed-slug] Couldn't generate URL prefix: `, error)
+  useEffect(() => {
+    if (typeof folder !== 'function' || !document) {
+      return undefined
+    }
+    let cancelled = false
+    async function resolve(doc: SanityDocument) {
+      try {
+        const value = await resolveFolder(folder, doc)
+        if (!cancelled) {
+          setResolved({ready: true, folder: value})
         }
+      } catch (error) {
+        console.error(`[thread-kit] Couldn't resolve the slug folder:`, error)
       }
+    }
+    void resolve(document)
+    return () => {
+      cancelled = true
+    }
+  }, [folder, document])
 
-      setFolder(undefined)
+  return typeof folder === 'function' ? resolved : {ready: true, folder}
+}
+
+export function usePrefixLogic(props: ExtendedSlugInputProps) {
+  const {folder: folderOption, onChange, path, readOnly, schemaType, value} = props
+  const slugContext = useSlugContext()
+  const formValue = useFormValue([])
+  const document = isSanityDocument(formValue) ? formValue : undefined
+  const {ready, folder} = useFolder(folderOption, document)
+
+  const current = value?.current
+  const storedFullUrl = value && 'fullUrl' in value ? value.fullUrl : undefined
+
+  const updateValue = useCallback(
+    (nextCurrent: string) => {
+      onChange(
+        nextCurrent
+          ? set({
+              _type: schemaType.name,
+              current: nextCurrent,
+              fullUrl: buildFullUrl(nextCurrent, folder),
+            })
+          : unset(),
+      )
     },
-    // eslint-disable-next-line
-    [setFolder, options.folder],
+    [onChange, schemaType.name, folder],
   )
 
-  // Re-create the prefix whenever the document changes
+  // Repair a missing or stale fullUrl, e.g. on documents created outside the Studio or after the
+  // folder changed. The ref stops a second patch for the same value while the first is applied.
+  const lastRepair = useRef<string | undefined>(undefined)
   useEffect(() => {
-    getUrlPrefix(document)
-  }, [document, getUrlPrefix])
+    if (!ready || readOnly || !current) {
+      return
+    }
+    const expected = buildFullUrl(current, folder)
+    if (storedFullUrl === expected) {
+      lastRepair.current = undefined
+      return
+    }
+    if (lastRepair.current === expected) {
+      return
+    }
+    lastRepair.current = expected
+    onChange([setIfMissing(schemaType.name, ['_type']), set(expected, ['fullUrl'])])
+  }, [ready, readOnly, current, folder, storedFullUrl, onChange, schemaType.name])
 
-  function updateValue(strValue: string) {
-    const newValue = strValue
-      ? Object.assign(
-          {
-            _type: schemaType?.name || 'slug',
-            current: strValue,
-          },
-          {
-            fullUrl: finalPrefix == undefined ? `${strValue}` : `${finalPrefix}${strValue}`,
-          },
-        )
-      : undefined
-
-    props.onChange(createPatchFrom(newValue))
-  }
-
-  async function generateSlug() {
-    if (!document) return
-
-    const parentPath = props.path.slice(0, -1)
-    const parent = PathUtils.get(document, parentPath) as any
-    const sourceValue = await Promise.resolve(
-      typeof options?.source === 'function'
-        ? (options?.source(document, {parentPath, parent, ...sourceContext}) as string | undefined)
-        : (PathUtils.get(document, options?.source || []) as string | undefined),
-    )
-    formatSlug(sourceValue)
-  }
+  const getSourceContext = useCallback((): SlugSourceContext => {
+    const parentPath = path.slice(0, -1)
+    const parent = PathUtils.get<SlugParent>(document, parentPath) ?? {}
+    return {...slugContext, parentPath, parent}
+  }, [document, path, slugContext])
 
   /**
    * Avoids trailing slashes, double slashes, spaces, special characters and uppercase letters
    */
-  async function formatSlug(input?: React.FocusEventHandler<HTMLInputElement> | string) {
-    const customValue = typeof input === 'string' ? input : undefined
-    let finalSlug = customValue || props.value?.current || ''
-    // Option that can be passed to this input component to format values on input
-    const customSlugify = schemaType.options?.slugify
-    if (customSlugify) {
-      finalSlug = await Promise.resolve(customSlugify(finalSlug || '', schemaType, {} as any))
-    } else {
-      // Removing special characters, spaces, uppercase letters, etc.
-      finalSlug = finalSlug
-        // As we want to allow slashes between segments (segment-1/segment-2)
-        // We're splitting the string to preserve these slashes
-        .split('/')
-        // If a segment is empty, this means a starting or trailing slash, or double slashes, which we want to get rid of
-        .filter((segment: string | undefined) => !!segment)
-        .map((segment: string) => speakingurl(segment, {symbols: true}))
-        .join('/')
-    }
+  const formatSlug = useCallback(
+    async (input?: string) => {
+      const source = input || current || ''
+      const slugify = schemaType.options?.slugify
+      const nextCurrent = slugify
+        ? await slugify(source, schemaType, getSourceContext())
+        : source
+            // Keep slashes between segments (segment-1/segment-2) but drop empty segments,
+            // which come from starting, trailing or double slashes
+            .split('/')
+            .filter(Boolean)
+            .map((segment) => speakingurl(segment, {symbols: true}))
+            .join('/')
 
-    // Finally, save this final slug to the document
-    updateValue(finalSlug)
-  }
+      updateValue(nextCurrent)
+    },
+    [current, schemaType, getSourceContext, updateValue],
+  )
+
+  const generateSlug = useCallback(async () => {
+    const source = schemaType.options?.source
+    if (!document || !source) {
+      return
+    }
+    const sourceValue =
+      typeof source === 'function'
+        ? await source(document, getSourceContext())
+        : PathUtils.get(document, source)
+
+    await formatSlug(typeof sourceValue === 'string' ? sourceValue : undefined)
+  }, [document, schemaType.options?.source, getSourceContext, formatSlug])
 
   return {
-    prefix: finalPrefix,
+    prefix: buildPrefix(folder),
     generateSlug,
     updateValue,
     formatSlug,
