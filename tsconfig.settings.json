@@ -4,7 +4,9 @@
     "outDir": "./dist",
 
     "target": "esnext",
-    "jsx": "preserve",
+    // pkg-utils 12+ compiles JSX according to this option, and "preserve" would ship raw JSX in
+    // dist. plugin-kit 10 still expects "preserve", so its tsconfig check is off in package.json.
+    "jsx": "react-jsx",
     "module": "preserve",
     "moduleResolution": "bundler",
     "esModuleInterop": true,

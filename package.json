@@ -82,7 +82,8 @@
   },
   "sanityPlugin": {
     "verifyPackage": {
-      "nodeEngine": false
+      "nodeEngine": false,
+      "tsconfig": false
     }
   }
 }
