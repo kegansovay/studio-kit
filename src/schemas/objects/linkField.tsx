@@ -1,22 +1,77 @@
 import {LinkIcon} from '@sanity/icons/Link'
-import {defineField, definePlugin, defineType, type ObjectInputProps} from 'sanity'
+import {defineField, definePlugin, defineType, type FieldDefinition} from 'sanity'
 
 import {LinkInput} from '../../components/LinkInput'
 import {LinkTypeInput} from '../../components/LinkTypeInput'
-import type {LinkFieldPluginOptions, LinkValue} from '../../types'
+import type {LinkFieldPluginOptions} from '../../types'
 
-/** @public */
-export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => {
-  const {
-    linkableSchemaTypes = ['page'],
-    enableLinkParameters = true,
-    enableAnchorLinks = true,
-    customFields = [],
-  } = props || {}
+const LINK_TYPE_TITLES: Record<string, string> = {
+  internal: 'Internal Link',
+  external: 'External Link',
+  email: 'Email Link',
+  phone: 'Phone',
+}
 
-  const linkType = {
-    name: 'link',
-    title: 'Link',
+/** Placeholder `text` that the removed `disableText` option (1.4 – 1.6) wrote into documents */
+const LEGACY_DISABLED_TEXT = '_disabled_'
+
+interface LinkPreviewSelection {
+  text?: string
+  type?: string
+  internalLinkTitle?: string
+  internalLinkName?: string
+  url?: string
+  email?: string
+  phone?: string
+}
+
+interface LinkTypeConfig {
+  name: string
+  title: string
+  includeText: boolean
+  linkableSchemaTypes: string[]
+  enableLinkParameters: boolean
+  enableAnchorLinks: boolean
+  customFields: FieldDefinition[]
+}
+
+/** Reads the link `type` from the parent object in validation callbacks */
+function getLinkType(parent: unknown): unknown {
+  return typeof parent === 'object' && parent !== null && 'type' in parent ? parent.type : undefined
+}
+
+function getTypeTitle(type: string | undefined): string {
+  if (!type) return 'Link'
+  return LINK_TYPE_TITLES[type] ?? type.charAt(0).toUpperCase() + type.slice(1)
+}
+
+function getDestination(selection: LinkPreviewSelection): string | undefined {
+  switch (selection.type) {
+    case 'internal':
+      return selection.internalLinkTitle || selection.internalLinkName
+    case 'external':
+      return selection.url
+    case 'email':
+      return selection.email
+    case 'phone':
+      return selection.phone
+    default:
+      return undefined
+  }
+}
+
+function defineLinkType({
+  name,
+  title,
+  includeText,
+  linkableSchemaTypes,
+  enableLinkParameters,
+  enableAnchorLinks,
+  customFields,
+}: LinkTypeConfig) {
+  return defineType({
+    name,
+    title,
     type: 'object',
     icon: LinkIcon,
     fieldsets: [
@@ -31,20 +86,23 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
       },
     ],
     fields: [
-      defineField({
-        name: 'text',
-        type: 'string',
-        // validation is handled in the LinkInput component
-        validation: (Rule) => Rule.required(),
-      }),
+      ...(includeText
+        ? [
+            defineField({
+              name: 'text',
+              type: 'string',
+              validation: (rule) => rule.required(),
+            }),
+          ]
+        : []),
 
       defineField({
         name: 'type',
         type: 'string',
         initialValue: 'internal',
-        validation: (Rule) => Rule.required(),
+        validation: (rule) => rule.required(),
         components: {
-          input: (props) => LinkTypeInput({linkableSchemaTypes, ...props}),
+          input: (props) => <LinkTypeInput {...props} linkableSchemaTypes={linkableSchemaTypes} />,
         },
       }),
 
@@ -52,21 +110,16 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
       defineField({
         name: 'internalLink',
         type: 'reference',
-        to: linkableSchemaTypes.map((type: string) => ({
-          type,
-        })),
+        to: linkableSchemaTypes.map((type) => ({type})),
         options: {
           disableNew: true,
         },
         description: 'Link to another page or document on the website.',
         hidden: ({parent}) => !!parent?.type && parent?.type !== 'internal',
-        validation: (Rule) =>
-          Rule.custom((value, context) => {
-            if (!value && (context.parent as any)?.type == 'internal') {
-              return 'Link is required'
-            }
-            return true
-          }),
+        validation: (rule) =>
+          rule.custom((value, context) =>
+            !value && getLinkType(context.parent) === 'internal' ? 'Link is required' : true,
+          ),
       }),
 
       // External
@@ -78,15 +131,11 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
         validation: (rule) =>
           rule
             .uri({
-              //allowRelative: true,
               scheme: ['https', 'http'],
             })
-            .custom((value, context) => {
-              if (!value && (context.parent as any)?.type == 'external') {
-                return 'Link is required'
-              }
-              return true
-            }),
+            .custom((value, context) =>
+              !value && getLinkType(context.parent) === 'external' ? 'Link is required' : true,
+            ),
         hidden: ({parent}) => parent?.type !== 'external',
       }),
 
@@ -96,13 +145,10 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
         type: 'email',
         description: 'Link to send an e-mail to the given address.',
         hidden: ({parent}) => parent?.type !== 'email',
-        validation: (Rule) =>
-          Rule.custom((value, context) => {
-            if (!value && (context.parent as any)?.type == 'email') {
-              return 'Email is required'
-            }
-            return true
-          }),
+        validation: (rule) =>
+          rule.custom((value, context) =>
+            !value && getLinkType(context.parent) === 'email' ? 'Email is required' : true,
+          ),
       }),
 
       // Phone
@@ -112,18 +158,14 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
         description: 'Link to call the given phone number.',
         validation: (rule) =>
           rule.custom((value, context) => {
-            if (!value && (context.parent as any)?.type == 'phone') {
-              return 'Phone is required'
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if (!value || (context.parent as any)?.type !== 'phone') {
+            if (getLinkType(context.parent) !== 'phone') {
               return true
             }
-
+            if (!value) {
+              return 'Phone is required'
+            }
             return (
-              (new RegExp(/^\+?[0-9\s-]*$/).test(value) &&
-                !value.startsWith('-') &&
-                !value.endsWith('-')) ||
+              (/^\+?[0-9\s-]*$/.test(value) && !value.startsWith('-') && !value.endsWith('-')) ||
               'Must be a valid phone number'
             )
           }),
@@ -141,83 +183,61 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
       }),
 
       // Parameters
-      ...(enableLinkParameters || enableAnchorLinks
+      ...(enableLinkParameters
         ? [
-            ...(enableLinkParameters
-              ? [
-                  defineField({
-                    title: 'Parameters',
-                    name: 'parameters',
-                    type: 'string',
-                    description: 'Optional. Add custom parameters to the URL, such as UTM tags.',
-                    validation: (rule) =>
-                      rule.custom((value, context) => {
-                        if (
-                          !value ||
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (context.parent as any)?.type === 'email' ||
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (context.parent as any)?.type === 'phone'
-                        ) {
-                          return true
-                        }
+            defineField({
+              title: 'Parameters',
+              name: 'parameters',
+              type: 'string',
+              description: 'Optional. Add custom parameters to the URL, such as UTM tags.',
+              validation: (rule) =>
+                rule.custom((value, context) => {
+                  const type = getLinkType(context.parent)
+                  if (!value || type === 'email' || type === 'phone') {
+                    return true
+                  }
+                  if (!value.startsWith('?')) {
+                    return 'Must start with ?; eg. ?utm_source=example.com&utm_medium=referral'
+                  }
+                  if (value.length === 1) {
+                    return 'Must contain at least one parameter'
+                  }
+                  return true
+                }),
+              hidden: ({parent}) => parent?.type === 'email' || parent?.type === 'phone',
+              fieldset: 'advanced',
+            }),
+          ]
+        : []),
 
-                        if (value.indexOf('?') !== 0) {
-                          return 'Must start with ?; eg. ?utm_source=example.com&utm_medium=referral'
-                        }
-
-                        if (value.length === 1) {
-                          return 'Must contain at least one parameter'
-                        }
-
-                        return true
-                      }),
-                    hidden: ({parent}) => parent?.type === 'email' || parent?.type === 'phone',
-                    fieldset: 'advanced',
-                  }),
-                ]
-              : []),
-
-            // Anchor
-            ...(enableAnchorLinks
-              ? [
-                  defineField({
-                    title: 'Anchor',
-                    name: 'anchor',
-                    type: 'string',
-                    description:
-                      'Optional. Add an anchor to link to a specific section on the page.',
-                    validation: (rule) =>
-                      rule.custom((value, context) => {
-                        if (
-                          !value ||
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (context.parent as any)?.type === 'email' ||
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (context.parent as any)?.type === 'phone'
-                        ) {
-                          return true
-                        }
-
-                        if (value.indexOf('#') !== 0) {
-                          return 'Must start with #; eg. #page-section-1'
-                        }
-
-                        if (value.length === 1) {
-                          return 'Must contain at least one character'
-                        }
-
-                        return (
-                          new RegExp(/^([-?/:@._~!$&'()*+,;=a-zA-Z0-9]|%[0-9a-fA-F]{2})*$/).test(
-                            value.replace(/^#/, ''),
-                          ) || 'Invalid URL fragment'
-                        )
-                      }),
-                    hidden: ({parent}) => parent?.type === 'email' || parent?.type === 'phone',
-                    fieldset: 'advanced',
-                  }),
-                ]
-              : []),
+      // Anchor
+      ...(enableAnchorLinks
+        ? [
+            defineField({
+              title: 'Anchor',
+              name: 'anchor',
+              type: 'string',
+              description: 'Optional. Add an anchor to link to a specific section on the page.',
+              validation: (rule) =>
+                rule.custom((value, context) => {
+                  const type = getLinkType(context.parent)
+                  if (!value || type === 'email' || type === 'phone') {
+                    return true
+                  }
+                  if (!value.startsWith('#')) {
+                    return 'Must start with #; eg. #page-section-1'
+                  }
+                  if (value.length === 1) {
+                    return 'Must contain at least one character'
+                  }
+                  return (
+                    /^([-?/:@._~!$&'()*+,;=a-zA-Z0-9]|%[0-9a-fA-F]{2})*$/.test(value.slice(1)) ||
+                    'Invalid URL fragment'
+                  )
+                }),
+              hidden: ({parent}) => parent?.type === 'email' || parent?.type === 'phone',
+              fieldset: 'advanced',
+            }),
           ]
         : []),
 
@@ -227,53 +247,55 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
     preview: {
       select: {
         text: 'text',
-        internalLink: 'internalLink',
+        type: 'type',
+        internalLinkTitle: 'internalLink.title',
+        internalLinkName: 'internalLink.name',
         url: 'url',
         email: 'email',
         phone: 'phone',
-        type: 'type',
       },
-      prepare({text, internalLink, url, email, phone, type}: any) {
-        const title = text?.startsWith('_') ? 'Link' : text
-        let subtitle = ''
-        switch (type) {
-          case 'internal':
-            subtitle = internalLink?.name || 'Internal Link'
-            break
-          case 'external':
-            subtitle = url || 'External Link'
-            break
-          case 'email':
-            subtitle = email || 'Email Link'
-            break
-          case 'phone':
-            subtitle = phone || 'Phone'
-            break
-          default:
-            subtitle = type.charAt(0).toUpperCase() + type.slice(1)
-            break
+      prepare(selection: LinkPreviewSelection) {
+        const typeTitle = getTypeTitle(selection.type)
+        const destination = getDestination(selection)
+        const text = selection.text === LEGACY_DISABLED_TEXT ? undefined : selection.text
+
+        if (text) {
+          return {title: text, subtitle: destination || typeTitle}
         }
-        return {
-          title,
-          subtitle,
-        }
+        return {title: destination || typeTitle, subtitle: destination ? typeTitle : undefined}
       },
     },
 
     components: {
-      input: (props: ObjectInputProps<LinkValue>) =>
-        LinkInput({
-          ...props,
-          value: props.value as LinkValue,
-          compareValue: props.compareValue as LinkValue | undefined,
-        }),
+      input: LinkInput,
     },
-  }
+  })
+}
+
+/**
+ * Registers two object types that share the same fields and input:
+ * - `link`: link text plus a destination
+ * - `linkOnly`: just the destination, for places where the text comes from elsewhere
+ *
+ * @public
+ */
+export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => {
+  const {
+    linkableSchemaTypes = ['page'],
+    enableLinkParameters = true,
+    enableAnchorLinks = true,
+    customFields = [],
+  } = props || {}
+
+  const config = {linkableSchemaTypes, enableLinkParameters, enableAnchorLinks, customFields}
 
   return {
     name: 'link-field',
     schema: {
-      types: [defineType(linkType)],
+      types: [
+        defineLinkType({...config, name: 'link', title: 'Link', includeText: true}),
+        defineLinkType({...config, name: 'linkOnly', title: 'Link (no text)', includeText: false}),
+      ],
     },
   }
 })

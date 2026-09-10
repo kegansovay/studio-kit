@@ -1,16 +1,13 @@
 import {Box, Flex, Stack, Text} from '@sanity/ui'
-import React, {useEffect} from 'react'
+import type {ReactElement} from 'react'
 import {
   type FieldMember,
   FormFieldValidationStatus,
   ObjectInputMember,
-  ObjectInputProps,
-  PatchEvent,
-  set,
+  type ObjectInputProps,
+  type ObjectMember,
 } from 'sanity'
-import styled from 'styled-components'
-
-import {LinkValue} from '../types'
+import {styled} from 'styled-components'
 
 const ValidationErrorWrapper = styled(Box)`
   contain: size;
@@ -23,118 +20,83 @@ const FullWidthStack = styled(Stack)`
   width: 100%;
 `
 
-/**
- * Custom input component for the link object.
- * Nicely renders the type and link fields next to each other, with the
- * description and any validation errors for the link field below them.
- *
- * The rest of the fields ("blank" and "advanced") are rendered as usual.
- */
-export function LinkInput(props: ObjectInputProps<LinkValue>): React.ReactElement {
-  const [textField, typeField, linkField, ...otherFields] = props.members as FieldMember[]
-  const {value, onChange} = props
+/** Fields that hold the link destination. Only the one matching `type` is visible at a time. */
+const DESTINATION_FIELDS = new Set(['internalLink', 'url', 'email', 'phone'])
 
-  const disableText = props.schemaType.options?.disableText
+function isFieldMember(member: ObjectMember): member is FieldMember {
+  return member.kind === 'field'
+}
 
-  // Set a default value for text if disableText is true
-  useEffect(() => {
-    if (disableText && (!value?.text || value.text === '')) {
-      // Create a patch to set a placeholder value
-      const patch = PatchEvent.from(set('_disabled_', ['text']))
-      onChange(patch)
-    }
-  }, [disableText, value?.text, onChange])
-
-  const {
-    field: {
-      validation: linkFieldValidation,
-      schemaType: {description: linkFieldDescription},
-    },
-  } = linkField
-
-  const description = linkFieldDescription
-
-  const renderProps = {
-    renderAnnotation: props.renderAnnotation,
-    renderBlock: props.renderBlock,
-    renderField: props.renderField,
-    renderInlineBlock: props.renderInlineBlock,
-    renderInput: props.renderInput,
-    renderItem: props.renderItem,
-    renderPreview: props.renderPreview,
+/** Drops a member's label so its input can sit inline next to another one */
+function withoutTitle(member: FieldMember): FieldMember {
+  return {
+    ...member,
+    field: {...member.field, schemaType: {...member.field.schemaType, title: undefined}},
   }
+}
+
+/**
+ * Custom input component for the `link` and `linkOnly` objects.
+ * Renders the type and destination fields next to each other, with the destination's description
+ * and validation errors below them. `text` (on `link` only) and the other fields render as usual.
+ */
+export function LinkInput(props: ObjectInputProps): ReactElement {
+  const {
+    members,
+    renderAnnotation,
+    renderBlock,
+    renderField,
+    renderInlineBlock,
+    renderInput,
+    renderItem,
+    renderPreview,
+  } = props
+  const renderProps = {
+    renderAnnotation,
+    renderBlock,
+    renderField,
+    renderInlineBlock,
+    renderInput,
+    renderItem,
+    renderPreview,
+  }
+
+  const fieldMembers = members.filter(isFieldMember)
+  const textMember = fieldMembers.find((member) => member.name === 'text')
+  const typeMember = fieldMembers.find((member) => member.name === 'type')
+  const destinationMember = fieldMembers.find((member) => DESTINATION_FIELDS.has(member.name))
+  const otherMembers = members.filter(
+    (member) => member !== textMember && member !== typeMember && member !== destinationMember,
+  )
+
+  const validation = destinationMember?.field.validation ?? []
+  const description = destinationMember?.field.schemaType.description
 
   return (
     <Stack gap={4}>
-      {/* Only render text field if not disabled */}
-
-      {!disableText && (
-        <ObjectInputMember
-          member={{
-            ...textField,
-            field: {
-              ...textField.field,
-              schemaType: {
-                ...textField.field.schemaType,
-                title: textField.field.schemaType.title,
-              },
-            },
-          }}
-          {...renderProps}
-        />
-      )}
+      {textMember && <ObjectInputMember member={textMember} {...renderProps} />}
 
       <Stack gap={3}>
         <Text as="label" weight="medium" size={1}>
           Link
         </Text>
 
-        {/* Render any validation errors for the link field */}
-        {linkFieldValidation.length > 0 && (
+        {validation.length > 0 && (
           <ValidationErrorWrapper>
-            <FormFieldValidationStatus
-              fontSize={1}
-              placement="top-start"
-              validation={linkFieldValidation}
-            />
+            <FormFieldValidationStatus fontSize={1} placement="top-start" validation={validation} />
           </ValidationErrorWrapper>
         )}
 
         <Flex gap={2} align="center">
-          {/* Render the type field (without its label) */}
-          <ObjectInputMember
-            member={{
-              ...typeField,
-              field: {
-                ...typeField.field,
-                schemaType: {
-                  ...typeField.field.schemaType,
-                  title: undefined,
-                },
-              },
-            }}
-            {...renderProps}
-          />
+          {typeMember && <ObjectInputMember member={withoutTitle(typeMember)} {...renderProps} />}
 
-          <FullWidthStack gap={2}>
-            {/* Render the input for the selected type of link (withouts its label) */}
-            <ObjectInputMember
-              member={{
-                ...linkField,
-                field: {
-                  ...linkField.field,
-                  schemaType: {
-                    ...linkField.field.schemaType,
-                    title: undefined,
-                  },
-                },
-              }}
-              {...renderProps}
-            />
-          </FullWidthStack>
+          {destinationMember && (
+            <FullWidthStack gap={2}>
+              <ObjectInputMember member={withoutTitle(destinationMember)} {...renderProps} />
+            </FullWidthStack>
+          )}
         </Flex>
 
-        {/* Render the description of the selected link field, if any */}
         {description && (
           <Text muted size={1}>
             {description}
@@ -142,9 +104,8 @@ export function LinkInput(props: ObjectInputProps<LinkValue>): React.ReactElemen
         )}
       </Stack>
 
-      {/* Render the rest of the fields as usual */}
-      {otherFields.map((field) => (
-        <ObjectInputMember key={field.key} member={field} {...renderProps} />
+      {otherMembers.map((member) => (
+        <ObjectInputMember key={member.key} member={member} {...renderProps} />
       ))}
     </Stack>
   )

@@ -39,55 +39,6 @@ export interface LinkFieldPluginOptions {
   customFields?: FieldDefinition[]
 }
 
-export interface LinkFieldOptions {
-  disableText?: boolean
-}
-
-export interface CustomizableLink {
-  parameters?: string
-  anchor?: string
-  blank?: boolean
-}
-
-export interface InternalLink extends CustomizableLink {
-  type: 'internal'
-  internalLink?: {
-    _type: string
-    [key: string]: unknown
-  }
-}
-
-export interface ExternalLink extends CustomizableLink {
-  type: 'external'
-  url?: string
-}
-
-export interface EmailLink {
-  type: 'email'
-  email?: string
-}
-
-export interface PhoneLink {
-  type: 'phone'
-  phone?: string
-}
-
-export type LinkValue = {_key?: string; _type?: 'link'; text?: string} & (
-  | InternalLink
-  | ExternalLink
-  | EmailLink
-  | PhoneLink
-)
-
-export type SanityLink = {
-  text: string
-  link: string
-  blank?: boolean
-  parameters?: string
-  anchor?: string
-  type?: string
-}
-
 export interface FormBuilderPluginOptions {
   /** Registers the `formModule` object type (a reference to a `form` document) for page builders */
   enableModule?: boolean
