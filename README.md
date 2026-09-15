@@ -105,11 +105,10 @@ The slug is always required. Any `validation` you pass is added on top.
 
 #### Keeping `fullUrl` in sync
 
-The Studio input writes `fullUrl`, so documents created elsewhere, for example by AI agents through the Sanity MCP server, scripts or the HTTP API, don't have it until something sets it. `defineSlug` covers this in three ways:
+The Studio input writes `fullUrl`, so documents created elsewhere, for example by AI agents through the Sanity MCP server, scripts or the HTTP API, don't have it until something sets it. `defineSlug` covers this in two ways:
 
 - **The input repairs it.** When a document is opened in the Studio and its `fullUrl` is missing or out of date (for example because its folder changed), the input rewrites it. On a published document that creates a draft to publish. Locked, read-only slugs are left alone.
 - **Validation flags it.** A missing or wrong `fullUrl` is a validation error, so it blocks publishing from the Studio and shows up in `sanity documents validate`.
-- **The schema documents it.** Unless you pass your own `description`, the field describes how `fullUrl` is built, so it's visible to anyone (or any AI agent) reading the schema.
 
 When you create documents in code, build the value with `buildFullUrl`:
 

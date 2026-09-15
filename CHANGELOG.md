@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-09-14
+
+### Removed
+
+- The default `description` that `defineSlug` added to the slug field. A `description` you pass yourself still shows
+
 ## [2.0.0] - 2026-09-10
 
 Requires Sanity Studio 6.9.2 or later. Stay on 1.x for Sanity v4 and v5.

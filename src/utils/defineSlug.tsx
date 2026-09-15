@@ -2,13 +2,7 @@ import {defineField, type FieldDefinition, type SlugValue, type ValidationContex
 
 import SlugInput from '../components/SlugInput'
 import type {SlugParams} from '../types'
-import {buildFullUrl, buildPrefix, type SlugFolder} from './fullUrl'
-
-/** Explains how `fullUrl` is built. It's shown to editors and included in the deployed schema. */
-function describeFullUrl(folder: SlugFolder | undefined): string {
-  const prefix = typeof folder === 'function' ? '"/" + folder + "/"' : `"${buildPrefix(folder)}"`
-  return `Saved as slug.current, plus slug.fullUrl = ${prefix} + slug.current.`
-}
+import {buildFullUrl, type SlugFolder} from './fullUrl'
 
 /** Flags a `fullUrl` that doesn't match the folder and `current`, e.g. on documents created outside the Studio */
 function validateFullUrl(folder: SlugFolder | undefined) {
@@ -51,7 +45,7 @@ function validateFullUrl(folder: SlugFolder | undefined) {
 
 /** @public */
 export function defineSlug(schema: SlugParams = {}): FieldDefinition<'slug'> {
-  const {components, description, options, readOnly, validation, ...field} = schema
+  const {components, options, readOnly, validation, ...field} = schema
   const {url = '', folder, locked} = options ?? {}
 
   return defineField({
@@ -59,7 +53,6 @@ export function defineSlug(schema: SlugParams = {}): FieldDefinition<'slug'> {
     name: field.name ?? 'slug',
     title: field.title ?? 'URL',
     type: 'slug',
-    description: description ?? describeFullUrl(folder),
     components: {
       ...components,
       input: (props) => <SlugInput {...props} url={url} folder={folder} />,
