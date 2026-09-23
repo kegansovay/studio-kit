@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- `enableManualLinks` option for `linkField()` (default `false`). When on, the link type dropdown gains a **Manual** option: a `path` string for a hand-typed route on the same site, validated to start with `/` (and to not start with `//` or contain spaces). Anchor and parameters apply; "open in new window" is hidden, as it is for internal links
+
 ## [2.0.1] - 2026-09-14
 
 ### Removed

@@ -47,6 +47,8 @@ export interface LinkFieldPluginOptions {
   linkableSchemaTypes: string[]
   enableLinkParameters?: boolean
   enableAnchorLinks?: boolean
+  /** Adds a `Manual` link type: a hand-typed path on this site, e.g. `/about/our-team`. Off by default */
+  enableManualLinks?: boolean
   customFields?: FieldDefinition[]
 }
 

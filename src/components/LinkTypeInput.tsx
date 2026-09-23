@@ -1,7 +1,7 @@
 import {ChevronDownIcon} from '@sanity/icons/ChevronDown'
 import {Button} from '@sanity/ui'
 import {Menu, MenuButton, MenuItem} from '@sanity/ui/menu'
-import {AtSignIcon, GlobeIcon, LinkIcon, PhoneIcon} from 'lucide-react'
+import {AtSignIcon, GlobeIcon, LinkIcon, PhoneIcon, RouteIcon} from 'lucide-react'
 import React, {ComponentType} from 'react'
 import {set, type StringInputProps} from 'sanity'
 import {styled} from 'styled-components'
@@ -16,6 +16,7 @@ export interface LinkType {
 
 const defaultLinkTypes: LinkType[] = [
   {title: 'Internal', value: 'internal', icon: LinkIcon},
+  {title: 'Manual', value: 'manual', icon: RouteIcon},
   {title: 'URL', value: 'external', icon: GlobeIcon},
   {title: 'Email', value: 'email', icon: AtSignIcon},
   {title: 'Phone', value: 'phone', icon: PhoneIcon},
@@ -48,13 +49,17 @@ export function LinkTypeInput({
   value,
   onChange,
   linkableSchemaTypes,
+  enableManualLinks,
 }: StringInputProps & {
   linkableSchemaTypes: LinkFieldPluginOptions['linkableSchemaTypes']
+  enableManualLinks?: LinkFieldPluginOptions['enableManualLinks']
 }): React.ReactElement {
-  // Disable internal links if not enabled for any schema types
-  const linkTypes = defaultLinkTypes.filter(
-    (type) => type.value !== 'internal' || linkableSchemaTypes?.length > 0,
-  )
+  // Disable internal links if not enabled for any schema types, and manual links unless opted in
+  const linkTypes = defaultLinkTypes.filter((type) => {
+    if (type.value === 'internal') return linkableSchemaTypes?.length > 0
+    if (type.value === 'manual') return !!enableManualLinks
+    return true
+  })
 
   const selectedType = linkTypes.find((type) => type.value === value) || linkTypes[0]
 
