@@ -2,12 +2,14 @@
 
 A collection of opinionated plugins, fields, & components for building in Sanity Studio. Some plugins have been adapted from various users to better fit our needs.
 
+> **Renamed.** This package was published as `@madebythread/thread-kit` up to and including 2.1.0. That name is deprecated and receives no further updates — switch your imports to `@kegansovay/studio-kit`.
+
 ## Compatibility
 
-| thread-kit | Sanity Studio  | Notes                                    |
-| ---------- | -------------- | ---------------------------------------- |
-| 2.x        | 6.9.2 or later | ESM only, React 19.2+, Node 22.12+       |
-| 1.x        | v4 and v5      | `npm install @kegansovay/studio-kit@1` |
+| studio-kit | Sanity Studio  | Notes                                             |
+| ---------- | -------------- | ------------------------------------------------- |
+| 2.x        | 6.9.2 or later | ESM only, React 19.2+, Node 22.12+                |
+| 1.x        | v4 and v5      | `npm install @madebythread/thread-kit@1` (legacy) |
 
 ## Installation
 
