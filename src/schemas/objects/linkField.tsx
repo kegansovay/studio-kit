@@ -152,6 +152,9 @@ function defineLinkType({
                   if (!value) {
                     return 'Link is required'
                   }
+                  if (/^https?:\/\//i.test(value)) {
+                    return 'Remove the https://yoursite.com part; just the path, eg. /about/our-team'
+                  }
                   if (!value.startsWith('/')) {
                     return 'Must start with /; eg. /about/our-team'
                   }
