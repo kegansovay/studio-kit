@@ -1,4 +1,4 @@
-# @madebythread/thread-kit
+# @kegansovay/studio-kit
 
 A collection of opinionated plugins, fields, & components for building in Sanity Studio. Some plugins have been adapted from various users to better fit our needs.
 
@@ -7,12 +7,12 @@ A collection of opinionated plugins, fields, & components for building in Sanity
 | thread-kit | Sanity Studio  | Notes                                    |
 | ---------- | -------------- | ---------------------------------------- |
 | 2.x        | 6.9.2 or later | ESM only, React 19.2+, Node 22.12+       |
-| 1.x        | v4 and v5      | `npm install @madebythread/thread-kit@1` |
+| 1.x        | v4 and v5      | `npm install @kegansovay/studio-kit@1` |
 
 ## Installation
 
 ```sh
-npm install @madebythread/thread-kit
+npm install @kegansovay/studio-kit
 ```
 
 `sanity`, `react` and `styled-components` are peer dependencies, which every Sanity Studio already has.
@@ -24,7 +24,7 @@ npm install @madebythread/thread-kit
 Adds a character count tag above a string or text field. Pass the limit to `CharacterCountInput()`; the default is 160.
 
 ```ts
-import {CharacterCountInput} from '@madebythread/thread-kit'
+import {CharacterCountInput} from '@kegansovay/studio-kit'
 
 defineField({
   name: 'title',
@@ -48,7 +48,7 @@ defineField({
 Setup plugin in `sanity.config.ts`:
 
 ```ts
-import {linkField} from '@madebythread/thread-kit'
+import {linkField} from '@kegansovay/studio-kit'
 
 export default defineConfig({
   //...
@@ -101,7 +101,7 @@ A slug field with a folder prefix, adapted from hdoro's [slug plugin](https://gi
 It stores `slug.current` plus `slug.fullUrl`, the path your frontend can route on: the folder followed by `slug.current`, always starting with `/`.
 
 ```ts
-import {defineSlug} from '@madebythread/thread-kit'
+import {defineSlug} from '@kegansovay/studio-kit'
 
 defineSlug({
   name: 'slug', // optional, default 'slug'
@@ -128,7 +128,7 @@ The Studio input writes `fullUrl`, so documents created elsewhere, for example b
 When you create documents in code, build the value with `buildFullUrl`:
 
 ```ts
-import {buildFullUrl} from '@madebythread/thread-kit'
+import {buildFullUrl} from '@kegansovay/studio-kit'
 
 buildFullUrl('episode-1', 'podcast/media') // '/podcast/media/episode-1'
 ```
@@ -138,7 +138,7 @@ buildFullUrl('episode-1', 'podcast/media') // '/podcast/media/episode-1'
 `FormBuilderPlugin` registers a `form` document and the field types it uses.
 
 ```ts
-import {FormBuilderPlugin} from '@madebythread/thread-kit'
+import {FormBuilderPlugin} from '@kegansovay/studio-kit'
 
 export default defineConfig({
   //...
@@ -166,7 +166,7 @@ defineField({name: 'pageBuilder', type: 'array', of: [{type: 'formModule'}]})
 Sanity renders `icon` as a component, so a plain emoji string doesn't show up. `emojiIcon` turns an emoji into an icon component you can use for schema types, field groups, preview `media`, structure list items and document actions.
 
 ```ts
-import {emojiIcon} from '@madebythread/thread-kit'
+import {emojiIcon} from '@kegansovay/studio-kit'
 
 defineType({
   name: 'page',

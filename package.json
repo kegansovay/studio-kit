@@ -1,20 +1,20 @@
 {
-  "name": "@madebythread/thread-kit",
+  "name": "@kegansovay/studio-kit",
   "version": "2.1.0",
   "description": "Toolkit for sanity studio",
   "keywords": [
     "sanity",
     "sanity-plugin"
   ],
-  "homepage": "https://github.com/Thread-Creative/thread-kit#readme",
+  "homepage": "https://github.com/kegansovay/studio-kit#readme",
   "bugs": {
-    "url": "https://github.com/Thread-Creative/thread-kit/issues"
+    "url": "https://github.com/kegansovay/studio-kit/issues"
   },
   "license": "MIT",
   "author": "Kegan Sovay <kegan@madebythread.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Thread-Creative/thread-kit.git"
+    "url": "git+https://github.com/kegansovay/studio-kit.git"
   },
   "files": [
     "dist"
