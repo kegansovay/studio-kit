@@ -21,7 +21,7 @@ const FullWidthStack = styled(Stack)`
 `
 
 /** Fields that hold the link destination. Only the one matching `type` is visible at a time. */
-const DESTINATION_FIELDS = new Set(['internalLink', 'url', 'email', 'phone'])
+const DESTINATION_FIELDS = new Set(['internalLink', 'path', 'url', 'email', 'phone'])
 
 function isFieldMember(member: ObjectMember): member is FieldMember {
   return member.kind === 'field'

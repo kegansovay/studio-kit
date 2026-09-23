@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-09-22
+
+### Added
+
+- `enableManualLinks` option for `linkField()` (default `false`). When on, the link type dropdown gains a **Manual** option: a `path` string for a hand-typed route on the same site, stored alongside the other destinations and projected with `type == 'manual' => {"link": path}`
+
+  The path must start with `/`, and can't start with `//` or contain spaces. Pasting a full `https://` URL gives an error that says to drop the origin. Nothing checks the path against the live site, which the field description says. Anchor and parameters apply; "open in new window" is hidden, as it is for internal links
+
 ## [2.0.1] - 2026-09-14
 
 ### Removed

@@ -58,6 +58,7 @@ export default defineConfig({
       linkableSchemaTypes: pageTypes,
       enableAnchorLinks: false, //optional default is true
       enableLinkParameters: false, //optional default is true
+      enableManualLinks: true, //optional default is false
     }),
   ],
 })
@@ -76,6 +77,20 @@ defineField({name: 'cardLink', type: 'linkOnly'})
 ```
 
 Apart from `text`, both store the same fields, so one GROQ projection works for both.
+
+#### Manual links
+
+`enableManualLinks: true` adds a **Manual** option to the link type dropdown: a plain text field for a path on this site, stored as `path`.
+
+Use it for routes that aren't Sanity documents — a Shopify collection, an app route, a page handled outside the CMS. Prefer an internal link when the destination is a document, since that keeps the reference intact when the slug changes.
+
+The path must start with `/`, must not start with `//`, and must not contain spaces. Nothing checks it against the live site, so a typo ships as a 404 — the field description says as much under the input. **Anchor** and **Parameters** are available on a manual link; **Open in new window** isn't, same as internal links.
+
+```groq
+type == 'manual' => {
+  "link": path,
+}
+```
 
 > **Upgrading from 1.x:** the `options: {disableText: true}` field option is gone. Use `type: 'linkOnly'` instead. The old option wrote `text: "_disabled_"` into documents; link previews ignore it, but unset it anywhere your frontend renders `text`.
 

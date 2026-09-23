@@ -7,6 +7,7 @@ import type {LinkFieldPluginOptions} from '../../types'
 
 const LINK_TYPE_TITLES: Record<string, string> = {
   internal: 'Internal Link',
+  manual: 'Manual Link',
   external: 'External Link',
   email: 'Email Link',
   phone: 'Phone',
@@ -20,6 +21,7 @@ interface LinkPreviewSelection {
   type?: string
   internalLinkTitle?: string
   internalLinkName?: string
+  path?: string
   url?: string
   email?: string
   phone?: string
@@ -32,6 +34,7 @@ interface LinkTypeConfig {
   linkableSchemaTypes: string[]
   enableLinkParameters: boolean
   enableAnchorLinks: boolean
+  enableManualLinks: boolean
   customFields: FieldDefinition[]
 }
 
@@ -49,6 +52,8 @@ function getDestination(selection: LinkPreviewSelection): string | undefined {
   switch (selection.type) {
     case 'internal':
       return selection.internalLinkTitle || selection.internalLinkName
+    case 'manual':
+      return selection.path
     case 'external':
       return selection.url
     case 'email':
@@ -67,6 +72,7 @@ function defineLinkType({
   linkableSchemaTypes,
   enableLinkParameters,
   enableAnchorLinks,
+  enableManualLinks,
   customFields,
 }: LinkTypeConfig) {
   return defineType({
@@ -102,7 +108,13 @@ function defineLinkType({
         initialValue: 'internal',
         validation: (rule) => rule.required(),
         components: {
-          input: (props) => <LinkTypeInput {...props} linkableSchemaTypes={linkableSchemaTypes} />,
+          input: (props) => (
+            <LinkTypeInput
+              {...props}
+              linkableSchemaTypes={linkableSchemaTypes}
+              enableManualLinks={enableManualLinks}
+            />
+          ),
         },
       }),
 
@@ -121,6 +133,42 @@ function defineLinkType({
             !value && getLinkType(context.parent) === 'internal' ? 'Link is required' : true,
           ),
       }),
+
+      // Manual
+      ...(enableManualLinks
+        ? [
+            defineField({
+              title: 'Path',
+              name: 'path',
+              type: 'string',
+              description:
+                'A path on this website, starting with "/"; eg. /about/our-team. This is not checked against the site, so make sure the page exists or the link will 404.',
+              hidden: ({parent}) => parent?.type !== 'manual',
+              validation: (rule) =>
+                rule.custom((value, context) => {
+                  if (getLinkType(context.parent) !== 'manual') {
+                    return true
+                  }
+                  if (!value) {
+                    return 'Link is required'
+                  }
+                  if (/^https?:\/\//i.test(value)) {
+                    return 'Remove the https://yoursite.com part; just the path, eg. /about/our-team'
+                  }
+                  if (!value.startsWith('/')) {
+                    return 'Must start with /; eg. /about/our-team'
+                  }
+                  if (value.startsWith('//')) {
+                    return 'Must not start with //, which points at another website'
+                  }
+                  if (/\s/.test(value)) {
+                    return 'Must not contain spaces'
+                  }
+                  return true
+                }),
+            }),
+          ]
+        : []),
 
       // External
       defineField({
@@ -179,7 +227,10 @@ function defineLinkType({
         type: 'boolean',
         initialValue: false,
         hidden: ({parent}) =>
-          parent?.type === 'email' || parent?.type === 'phone' || parent?.type === 'internal',
+          parent?.type === 'email' ||
+          parent?.type === 'phone' ||
+          parent?.type === 'internal' ||
+          parent?.type === 'manual',
       }),
 
       // Parameters
@@ -250,6 +301,7 @@ function defineLinkType({
         type: 'type',
         internalLinkTitle: 'internalLink.title',
         internalLinkName: 'internalLink.name',
+        path: 'path',
         url: 'url',
         email: 'email',
         phone: 'phone',
@@ -284,10 +336,17 @@ export const linkField = definePlugin<LinkFieldPluginOptions | void>((props) => 
     linkableSchemaTypes = ['page'],
     enableLinkParameters = true,
     enableAnchorLinks = true,
+    enableManualLinks = false,
     customFields = [],
   } = props || {}
 
-  const config = {linkableSchemaTypes, enableLinkParameters, enableAnchorLinks, customFields}
+  const config = {
+    linkableSchemaTypes,
+    enableLinkParameters,
+    enableAnchorLinks,
+    enableManualLinks,
+    customFields,
+  }
 
   return {
     name: 'link-field',
